@@ -1,0 +1,11 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/nav_inicio"
+        android:title="Inicio"
+        android:icon="@drawable/ic_home" />
+    <item android:id="@+id/nav_vista1"
+        android:title="Vista 1"
+        android:icon="@drawable/ic_page1" />
+    <item android:id="@+id/nav_vista2"
+        android:title="Vista 2"
+        android:icon="@drawable/ic_page2" />
+</menu>

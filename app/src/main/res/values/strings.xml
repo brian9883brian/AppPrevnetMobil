@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">AppPreventPhone</string>
+    <string name="email_hint">Correo electrónico</string>
+    <string name="password_hint">Contraseña</string>
+    <string name="login_button">Iniciar sesión</string>
+    <string name="email_content_desc">Campo para ingresar el correo electrónico</string>
+    <string name="password_content_desc">Campo para ingresar la contraseña</string>
+</resources>

@@ -8,32 +8,32 @@
     android:layout_height="match_parent">
 
     <!-- CONTENIDO PRINCIPAL -->
-
-    <!-- MENÚ LATERAL -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/gray"
+        android:background="@color/white"
         android:padding="16dp">
 
         <!-- BOTÓN DE MENÚ -->
+
+        <!-- TÍTULO DE BIENVENIDA -->
         <ImageButton
             android:id="@+id/btnMenu"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="66dp"
+            android:layout_height="64dp"
+            android:layout_marginTop="16dp"
             android:background="?attr/selectableItemBackground"
             android:contentDescription="Abrir menú"
-            android:src="@drawable/droplist"
+            android:src="@drawable/ic_menu"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <!-- TÍTULO DE BIENVENIDA -->
         <TextView
             android:id="@+id/welcomeText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="Bienvenido a AppPrevent"
+            android:text="Historial de velocidades"
             android:textColor="@color/black"
             android:textSize="22sp"
             android:textStyle="bold"
@@ -53,51 +53,25 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/welcomeText" />
 
-        <!-- RECYCLERVIEW DE DATOS -->
-
-        <!-- BOTONES RÁPIDOS -->
-
+        <!-- RECYCLERVIEW COMO TABLA CENTRADA Y DISTINGUIBLE -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvDatos"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginTop="32dp"
+            android:layout_marginBottom="32dp"
+            android:padding="12dp"
             android:clipToPadding="false"
-            android:padding="8dp"
-            app:layout_constraintBottom_toTopOf="@id/quickButtons"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="1.0"
-            app:layout_constraintStart_toStartOf="parent"
+            android:background="@drawable/table_background"
+            android:scrollbars="vertical"
             app:layout_constraintTop_toBottomOf="@id/mainIcon"
-            app:layout_constraintVertical_bias="1.0" />
-
-        <LinearLayout
-            android:id="@+id/quickButtons"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:orientation="horizontal"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent">
-
-            <Button
-                android:id="@+id/btnVista1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Vista 1" />
-
-            <Button
-                android:id="@+id/btnVista2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:text="Vista 2" />
-        </LinearLayout>
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
+    <!-- MENÚ LATERAL -->
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/navigationView"
         android:layout_width="wrap_content"

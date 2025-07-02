@@ -1,0 +1,21 @@
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <!-- Fondo blanco -->
+    <solid android:color="#FAFAFA"/>
+
+    <!-- Borde más visible -->
+    <stroke
+        android:width="1.5dp"
+        android:color="#B0BEC5" /> <!-- Gris azulado claro -->
+
+    <!-- Bordes redondeados -->
+    <corners android:radius="12dp" />
+
+    <!-- Sombra sutil si usas API 21+ (puede necesitar elevación en código) -->
+    <padding
+        android:left="4dp"
+        android:top="4dp"
+        android:right="4dp"
+        android:bottom="4dp" />
+</shape>

@@ -8,4 +8,7 @@
     <item android:id="@+id/nav_vista2"
         android:title="Vista 2"
         android:icon="@drawable/ic_page2" />
+    <item android:id="@+id/nav_vista2"
+        android:title="Vista 3"
+        android:icon="@drawable/ic_page2" />
 </menu>

@@ -15,8 +15,6 @@
         android:padding="16dp">
 
         <!-- BOTÓN DE MENÚ -->
-
-        <!-- TÍTULO DE BIENVENIDA -->
         <ImageButton
             android:id="@+id/btnMenu"
             android:layout_width="66dp"
@@ -28,6 +26,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <!-- TÍTULO -->
         <TextView
             android:id="@+id/welcomeText"
             android:layout_width="wrap_content"
@@ -53,21 +52,64 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/welcomeText" />
 
-        <!-- RECYCLERVIEW COMO TABLA CENTRADA Y DISTINGUIBLE -->
+        <!-- RECYCLERVIEW COMO TABLA -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvDatos"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_marginTop="32dp"
-            android:layout_marginBottom="32dp"
+            android:layout_marginBottom="16dp"
             android:padding="12dp"
             android:clipToPadding="false"
             android:background="@drawable/table_background"
             android:scrollbars="vertical"
             app:layout_constraintTop_toBottomOf="@id/mainIcon"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/buttonContainer"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- CONTENEDOR DE BOTONES -->
+        <LinearLayout
+            android:id="@+id/buttonContainer"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@id/rvDatos"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnBano"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Ir al baño"
+                android:textAllCaps="false"
+                android:layout_marginEnd="8dp"
+                style="@style/CustomButton" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnTerminar"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Terminar turno"
+                android:textAllCaps="false"
+                android:layout_marginEnd="8dp"
+                style="@style/CustomButton" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnComida"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Hora de comida"
+                android:textAllCaps="false"
+                style="@style/CustomButton" />
+        </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

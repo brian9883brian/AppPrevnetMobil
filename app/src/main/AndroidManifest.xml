@@ -21,6 +21,7 @@
             android:name=".LoginActivity"
             android:exported="true"
             android:label="Login">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -28,6 +29,9 @@
         </activity>
         <activity android:name=".Vista1Activity"/>
         <activity android:name=".Vista2Activity"/>
+        <activity android:name=".HistoricoActivity" />
+
+
 
         <!-- MainActivity sigue como está, pero sin el intent-filter de inicio -->
         <activity

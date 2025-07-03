@@ -1,7 +1,9 @@
 package com.example.appprevent
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -22,11 +24,27 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // Buscar botones
+        val btnVista1 = findViewById<Button>(R.id.btnVista1)
+        val btnVista2 = findViewById<Button>(R.id.btnVista2)
         // Inicializar RecyclerView
         rvDatos = findViewById(R.id.rvDatos)
         adapter = DatoAdapter(datosRecibidos)
         rvDatos.layoutManager = LinearLayoutManager(this)
         rvDatos.adapter = adapter
+
+
+        btnVista1.setOnClickListener {
+            val intent = Intent(this, HistoricoActivity::class.java)
+            startActivity(intent)
+        }
+
+        // Puedes usar btnVista2 para otra vista futura, o hacer lo mismo
+        btnVista2.setOnClickListener {
+            // Aquí podrías abrir otra actividad, por ahora podrías duplicar si deseas
+            val intent = Intent(this, HistoricoActivity::class.java)
+            startActivity(intent)
+        }
 
         // Inicializar Retrofit
         val retrofit = Retrofit.Builder()

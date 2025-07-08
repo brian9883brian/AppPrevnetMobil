@@ -10,24 +10,65 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:padding="16dp">
 
-        <!-- Título -->
+        <!-- Sensor A -->
         <TextView
+            android:id="@+id/tvSensorATitulo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Histórico de Datos"
-            android:textSize="22sp"
+            android:text="Sensor A"
+            android:textSize="20sp"
             android:textStyle="bold"
-            android:textColor="@android:color/black"
-            android:gravity="center"
-            android:paddingBottom="16dp" />
+            android:paddingBottom="8dp"/>
 
-        <!-- Contenedor de tarjetas -->
         <LinearLayout
-            android:id="@+id/contenedorHistorial"
+            android:id="@+id/contenedorSensorA"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" />
+            android:orientation="vertical"
+            android:background="@drawable/borde_tabla"
+            android:padding="8dp"
+            android:layout_marginBottom="24dp"/>
+
+        <!-- Sensor B -->
+        <TextView
+            android:id="@+id/tvSensorBTitulo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Sensor B"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:paddingBottom="8dp"/>
+
+        <LinearLayout
+            android:id="@+id/contenedorSensorB"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/borde_tabla"
+            android:padding="8dp"
+            android:layout_marginBottom="24dp"/>
+
+        <!-- Sensor C -->
+        <TextView
+            android:id="@+id/tvSensorCTitulo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Sensor C"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:paddingBottom="8dp"/>
+
+        <LinearLayout
+            android:id="@+id/contenedorSensorC"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/borde_tabla"
+            android:padding="8dp"
+            android:layout_marginBottom="24dp"/>
+
     </LinearLayout>
 </ScrollView>

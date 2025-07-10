@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
+    <!-- Permitir tráfico HTTP sin cifrar para todas las conexiones -->
     <base-config cleartextTrafficPermitted="true" />
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">192.168.137.166</domain>
-    </domain-config>
 </network-security-config>

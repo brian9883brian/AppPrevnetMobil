@@ -10,13 +10,18 @@ import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.Wearable
 import retrofit2.*
 import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.Callback
+import retrofit2.Call
+import retrofit2.Response
 
 class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListener {
 
     private lateinit var rvDatos: RecyclerView
     private lateinit var adapter: DatoAdapter
     private val datosRecibidos = mutableListOf<String>()
-    private lateinit var api: ApiService
+
+    private lateinit var api: ApiService        // API local
+    private lateinit var apiNube: ApiServiceNube // API nube
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,15 +33,21 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
         rvDatos.layoutManager = LinearLayoutManager(this)
         rvDatos.adapter = adapter
 
-        // Inicializar Retrofit
-        val retrofit = Retrofit.Builder()
-            .baseUrl("http://192.168.137.166:8000/")
+        // Retrofit para API local
+        val retrofitLocal = Retrofit.Builder()
+            .baseUrl("http://192.168.137.240:8000/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
+        api = retrofitLocal.create(ApiService::class.java)
 
-        api = retrofit.create(ApiService::class.java)
+        // Retrofit para API nube
+        val retrofitNube = Retrofit.Builder()
+            .baseUrl("http://192.168.137.240:8080/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+        apiNube = retrofitNube.create(ApiServiceNube::class.java)
 
-        // Registrar listener
+        // Registrar listener para recibir mensajes Wear OS
         Wearable.getMessageClient(this).addListener(this)
     }
 
@@ -49,18 +60,38 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
             adapter.notifyItemInserted(datosRecibidos.size - 1)
         }
 
-        // Enviar mensaje al microservicio (nivel niebla)
-        val dato = DatoRequest(mensaje)
-        api.enviarDato(dato).enqueue(object : Callback<DatoRequest> {
-            override fun onResponse(call: Call<DatoRequest>, response: Response<DatoRequest>) {
-                Log.d("API", "Dato enviado correctamente: ${response.body()?.mensaje}")
+        if (mensaje == "Posible caída detectada") {
+            enviarTodosLosRegistros()
+        } else {
+            val dato = DatoRequest(mensaje)
+            api.enviarDato(dato).enqueue(object : Callback<DatoRequest> {
+                override fun onResponse(call: Call<DatoRequest>, response: Response<DatoRequest>) {
+                    Log.d("API Local", "Dato enviado correctamente: ${response.body()?.mensaje}")
+                }
+
+                override fun onFailure(call: Call<DatoRequest>, t: Throwable) {
+                    Log.e("API Local", "Error al enviar dato", t)
+                }
+            })
+        }
+    }
+
+    private fun enviarTodosLosRegistros() {
+        apiNube.enviarTodosRegistros().enqueue(object : Callback<Void> {
+            override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                if (response.isSuccessful) {
+                    Log.d("API Nube", "Todos los registros enviados correctamente")
+                } else {
+                    Log.e("API Nube", "Error al enviar todos los registros: ${response.code()}")
+                }
             }
 
-            override fun onFailure(call: Call<DatoRequest>, t: Throwable) {
-                Log.e("API", "Error al enviar dato", t)
+            override fun onFailure(call: Call<Void>, t: Throwable) {
+                Log.e("API Nube", "Fallo al enviar todos los registros", t)
             }
         })
     }
+
 
     override fun onDestroy() {
         super.onDestroy()

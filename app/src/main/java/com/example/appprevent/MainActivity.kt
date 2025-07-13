@@ -1,10 +1,11 @@
 package com.example.appprevent
 
-import android.content.Intent
+import android.content.Intent // ← AGREGADO
 import android.os.Bundle
 import android.util.Log
-import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
+import androidx.drawerlayout.widget.DrawerLayout // ← AGREGADO
+import com.google.android.material.navigation.NavigationView // ← AGREGADO
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.gms.wearable.MessageClient
@@ -24,27 +25,11 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Buscar botones
-        val btnVista1 = findViewById<Button>(R.id.btnVista1)
-        val btnVista2 = findViewById<Button>(R.id.btnVista2)
         // Inicializar RecyclerView
         rvDatos = findViewById(R.id.rvDatos)
         adapter = DatoAdapter(datosRecibidos)
         rvDatos.layoutManager = LinearLayoutManager(this)
         rvDatos.adapter = adapter
-
-
-        btnVista1.setOnClickListener {
-            val intent = Intent(this, HistoricoActivity::class.java)
-            startActivity(intent)
-        }
-
-        // Puedes usar btnVista2 para otra vista futura, o hacer lo mismo
-        btnVista2.setOnClickListener {
-            // Aquí podrías abrir otra actividad, por ahora podrías duplicar si deseas
-            val intent = Intent(this, HistoricoActivity::class.java)
-            startActivity(intent)
-        }
 
         // Inicializar Retrofit
         val retrofit = Retrofit.Builder()
@@ -56,6 +41,26 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
 
         // Registrar listener
         Wearable.getMessageClient(this).addListener(this)
+
+        // ← AGREGADO: lógica para manejar el menú lateral
+        val drawerLayout = findViewById<DrawerLayout>(R.id.drawer_layout)
+        val navView = findViewById<NavigationView>(R.id.nav_view)
+
+        navView.setNavigationItemSelectedListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.nav_inicio -> {
+                    startActivity(Intent(this, MainActivity::class.java))
+                }
+                R.id.nav_vista1 -> {
+                    startActivity(Intent(this, HistoricoActivity::class.java))
+                }
+                R.id.nav_vista2 -> {
+                    startActivity(Intent(this, Vista2Activity::class.java))
+                }
+            }
+            drawerLayout.closeDrawers()
+            true
+        }
     }
 
     override fun onMessageReceived(event: MessageEvent) {

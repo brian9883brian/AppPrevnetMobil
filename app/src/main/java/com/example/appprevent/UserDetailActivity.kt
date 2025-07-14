@@ -11,18 +11,25 @@ class UserDetailActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_user_detail)
 
-        // Referencias a las vistas
         val txtNombre = findViewById<TextView>(R.id.txtNombre)
         val txtCorreo = findViewById<TextView>(R.id.txtCorreo)
         val txtTelefono = findViewById<TextView>(R.id.txtTelefono)
         val txtDireccion = findViewById<TextView>(R.id.txtDireccion)
         val userImage = findViewById<ImageView>(R.id.userImage)
 
-        // Datos estáticos (más adelante los cambiarás por datos desde la API)
-        txtNombre.text = "Nombre: Eduardo Mendoza"
-        txtCorreo.text = "Correo: eduardo@example.com"
-        txtTelefono.text = "Teléfono: 5512345678"
-        txtDireccion.text = "Dirección: Calle Falsa 123, CDMX"
+        // Leer datos guardados en SharedPreferences
+        val prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE)
+
+        val nombre = prefs.getString("usuario_nombre", "No definido")
+        val correo = prefs.getString("usuario_correo", "No definido")
+        val telefono = prefs.getString("usuario_telefono", "No definido")
+        val direccion = prefs.getString("usuario_domicilio", "No definido") // Si lo guardaste en login o registro
+
+        txtNombre.text = "Nombre: $nombre"
+        txtCorreo.text = "Correo: $correo"
+        txtTelefono.text = "Teléfono: $telefono"
+        txtDireccion.text = "Dirección: $direccion"
+
         userImage.setImageResource(R.drawable.ic_user)
     }
 }

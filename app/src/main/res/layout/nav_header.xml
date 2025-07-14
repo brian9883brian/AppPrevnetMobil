@@ -4,6 +4,14 @@
     android:layout_width="match_parent"
     android:layout_height="160dp"
     android:background="@color/purple_500">
+    <TextView
+        android:id="@+id/tvNombreUsuario"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Nombre de usuario"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_margin="16dp" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -13,3 +21,6 @@
         android:textSize="20sp"
         android:textStyle="bold"/>
 </LinearLayout>
+
+
+

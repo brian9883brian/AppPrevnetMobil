@@ -1,108 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F0F4F8"
     android:padding="16dp">
 
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        android:elevation="8dp"
-
-        android:background="@android:color/darker_gray">
+        card_view:cardCornerRadius="12dp"
+        card_view:cardElevation="6dp"
+        android:layout_marginBottom="16dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="24dp"
-            android:gravity="center_horizontal">
+            android:padding="16dp">
 
-            <!-- Imagen de perfil -->
             <ImageView
                 android:id="@+id/userImage"
-                android:layout_width="140dp"
-                android:layout_height="140dp"
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:layout_gravity="center_horizontal"
                 android:src="@drawable/ic_user"
-                android:layout_marginBottom="24dp"
-                android:contentDescription="Foto de usuario"
-                android:background="@drawable/circle_bg"
-                android:padding="12dp" />
+                android:contentDescription="Foto del usuario"
+                android:scaleType="centerCrop"
+                android:layout_marginBottom="16dp" />
 
-            <!-- Nombre -->
             <TextView
                 android:id="@+id/txtNombre"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Eduardo Mendoza"
-                android:textSize="24sp"
-                android:textStyle="bold"
-                android:textColor="#1E293B"
-                android:layout_marginBottom="16dp" />
+                android:text="Nombre: Eduardo Mendoza"
+                android:textSize="18sp"
+                android:layout_marginBottom="8dp" />
 
-            <!-- Correo -->
-            <LinearLayout
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/txtCorreo"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="12dp">
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_email"
-                    android:contentDescription="Email" />
-                <TextView
-                    android:id="@+id/txtCorreo"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="eduardo@example.com"
-                    android:textSize="16sp"
-                    android:textColor="#374151"
-                    android:layout_marginStart="12dp" />
-            </LinearLayout>
+                android:text="Correo: eduardo@example.com"
+                android:textSize="16sp"
+                android:layout_marginBottom="8dp" />
 
-            <!-- Teléfono -->
-            <LinearLayout
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/txtTelefono"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="12dp">
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_phone"
-                    android:contentDescription="Teléfono" />
-                <TextView
-                    android:id="@+id/txtTelefono"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="5512345678"
-                    android:textSize="16sp"
-                    android:textColor="#374151"
-                    android:layout_marginStart="12dp" />
-            </LinearLayout>
+                android:text="Teléfono: 5512345678"
+                android:textSize="16sp"
+                android:layout_marginBottom="8dp" />
 
-            <!-- Dirección -->
-            <LinearLayout
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/txtDireccion"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_location"
-                    android:contentDescription="Dirección" />
-                <TextView
-                    android:id="@+id/txtDireccion"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Calle Falsa 123, CDMX"
-                    android:textSize="16sp"
-                    android:textColor="#374151"
-                    android:layout_marginStart="12dp" />
-            </LinearLayout>
+                android:text="Dirección: Calle Falsa 123, CDMX"
+                android:textSize="16sp" />
         </LinearLayout>
     </androidx.cardview.widget.CardView>
+
 </ScrollView>

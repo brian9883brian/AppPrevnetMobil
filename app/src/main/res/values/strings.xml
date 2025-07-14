@@ -5,4 +5,12 @@
     <string name="login_button">Iniciar sesión</string>
     <string name="email_content_desc">Campo para ingresar el correo electrónico</string>
     <string name="password_content_desc">Campo para ingresar la contraseña</string>
+    <string name="titulo_sensor">Sensor A</string>
+    <string name="fecha">Fecha</string>
+    <string name="columna_x">X</string>
+    <string name="columna_y">Y</string>
+    <string name="columna_z">Z</string>
+    <string name="valor_x">123</string>
+    <string name="valor_y">456</string>
+    <string name="valor_z">789</string>
 </resources>

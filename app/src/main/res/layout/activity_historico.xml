@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/background_light"
+    android:background="@android:color/darker_gray"
     android:padding="16dp"
     tools:context=".HistoricoActivity">
 
@@ -18,57 +18,76 @@
             android:id="@+id/tvSensorATitulo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Sensor A"
-            android:textSize="20sp"
+            android:text="Velocidades Detectadas"
+            android:textSize="22sp"
             android:textStyle="bold"
-            android:paddingBottom="8dp"/>
+            android:textColor="#1E40AF"
+            android:paddingBottom="8dp" />
 
-        <LinearLayout
-            android:id="@+id/contenedorSensorA"
+        <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
+            android:layout_height="120dp"
             android:background="@drawable/borde_tabla"
             android:padding="8dp"
-            android:layout_marginBottom="24dp"/>
+
+            android:layout_marginBottom="24dp">
+
+            <LinearLayout
+                android:id="@+id/contenedorSensorA"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </ScrollView>
 
         <!-- Sensor B -->
         <TextView
             android:id="@+id/tvSensorBTitulo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Sensor B"
-            android:textSize="20sp"
+            android:text="Mensajes de Caída"
+            android:textSize="22sp"
             android:textStyle="bold"
-            android:paddingBottom="8dp"/>
+            android:textColor="#DC2626"
+            android:paddingBottom="8dp" />
 
-        <LinearLayout
-            android:id="@+id/contenedorSensorB"
+        <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
+            android:layout_height="120dp"
             android:background="@drawable/borde_tabla"
             android:padding="8dp"
-            android:layout_marginBottom="24dp"/>
+            android:layout_marginBottom="24dp">
+
+            <LinearLayout
+                android:id="@+id/contenedorSensorB"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </ScrollView>
 
         <!-- Sensor C -->
         <TextView
             android:id="@+id/tvSensorCTitulo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Sensor C"
-            android:textSize="20sp"
+            android:text="Posibles Caídas"
+            android:textSize="22sp"
             android:textStyle="bold"
-            android:paddingBottom="8dp"/>
+            android:textColor="#B45309"
+            android:paddingBottom="8dp" />
 
-        <LinearLayout
-            android:id="@+id/contenedorSensorC"
+        <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
+            android:layout_height="120dp"
             android:background="@drawable/borde_tabla"
             android:padding="8dp"
-            android:layout_marginBottom="24dp"/>
+            android:layout_marginBottom="24dp">
+
+            <LinearLayout
+                android:id="@+id/contenedorSensorC"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </ScrollView>
 
     </LinearLayout>
 </ScrollView>

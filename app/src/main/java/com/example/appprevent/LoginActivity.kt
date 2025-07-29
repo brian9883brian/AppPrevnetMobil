@@ -35,6 +35,11 @@ class LoginActivity : AppCompatActivity() {
             val intent = Intent(this, RegisterActivity::class.java)
             startActivity(intent)
         }
+        val tvForgotPassword = findViewById<TextView>(R.id.tvForgotPassword)
+        tvForgotPassword.setOnClickListener {
+            val intent = Intent(this, RecuperarPasswordActivity::class.java)
+            startActivity(intent)
+        }
 
         btnLogin.setOnClickListener {
             val user = username.text.toString().trim()

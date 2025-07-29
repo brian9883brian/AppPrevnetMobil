@@ -4,16 +4,20 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.drawerlayout.widget.DrawerLayout
-import com.google.android.material.navigation.NavigationView
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.room.Room
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.Wearable
-import retrofit2.*
-import retrofit2.converter.gson.GsonConverterFactory
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.navigation.NavigationView
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListener {
 
@@ -21,55 +25,96 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
     private lateinit var adapter: DatoAdapter
     private val datosRecibidos = mutableListOf<String>()
 
-    private lateinit var api: ApiService // Solo API local
+    private lateinit var db: AppDatabase
+    private lateinit var datoDao: DatoDao
 
-    // TextView para mostrar nombre usuario
     private lateinit var tvNombreUsuario: TextView
+
+    // Buffer temporal para acumular mensajes antes de guardar
+    private val bufferDatos = mutableListOf<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Inicializar y mostrar nombre guardado en SharedPreferences
-        tvNombreUsuario = findViewById(R.id.tvNombreUsuario)
+        db = Room.databaseBuilder(
+            applicationContext,
+            AppDatabase::class.java,
+            "app_database"
+        ).build()
+        datoDao = db.datoDao()
+
         val prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE)
-        val nombre = prefs.getString("usuario_nombre", "Usuario")
+        val nombre = prefs.getString("usuario_nombre", "Usuario") ?: "Usuario"
+
+        tvNombreUsuario = findViewById(R.id.tvNombreUsuario)
         tvNombreUsuario.text = "Hola, $nombre"
 
-        // Inicializar RecyclerView
         rvDatos = findViewById(R.id.rvDatos)
         adapter = DatoAdapter(datosRecibidos)
         rvDatos.layoutManager = LinearLayoutManager(this)
         rvDatos.adapter = adapter
 
-        // Retrofit para API local
-        val retrofitLocal = Retrofit.Builder()
-            .baseUrl("http://192.168.128.1:8000/") // Cambia según tu API
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-        api = retrofitLocal.create(ApiService::class.java)
+        cargarDatosDesdeBD()
 
-        // Registrar listener para recibir mensajes Wear OS
+        val btnBano = findViewById<MaterialButton>(R.id.btnBano)
+        val btnTerminar = findViewById<MaterialButton>(R.id.btnTerminar)
+        val btnComida = findViewById<MaterialButton>(R.id.btnComida)
+
+        val buttonClickListener = { buttonText: String ->
+            Toast.makeText(this, buttonText, Toast.LENGTH_SHORT).show()
+
+            lifecycleScope.launch(Dispatchers.IO) {
+                val bufferInsertExito = insertarBufferEnDB()
+                var botonInsertExito = false
+                try {
+                    datoDao.insertarDato(DatoEntity(mensaje = buttonText))
+                    botonInsertExito = true
+                } catch (e: Exception) {
+                    Log.e("DB", "Error al insertar dato botón: ${e.message}")
+                }
+
+                launch(Dispatchers.Main) {
+                    if (bufferInsertExito && botonInsertExito) {
+                        Toast.makeText(this@MainActivity, "Datos guardados correctamente", Toast.LENGTH_SHORT).show()
+                        Log.d("DB", "Buffer y botón insertados correctamente")
+                    } else if (!bufferInsertExito && !botonInsertExito) {
+                        Toast.makeText(this@MainActivity, "Error al guardar datos (buffer y botón)", Toast.LENGTH_LONG).show()
+                    } else if (!bufferInsertExito) {
+                        Toast.makeText(this@MainActivity, "Error al guardar datos del buffer", Toast.LENGTH_LONG).show()
+                    } else if (!botonInsertExito) {
+                        Toast.makeText(this@MainActivity, "Error al guardar dato del botón", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
+
+            runOnUiThread {
+                datosRecibidos.addAll(bufferDatos)
+                bufferDatos.clear()
+
+                datosRecibidos.add(buttonText)
+                adapter.notifyDataSetChanged()
+                rvDatos.scrollToPosition(datosRecibidos.size - 1)
+            }
+        }
+
+        btnBano.setOnClickListener { buttonClickListener(btnBano.text.toString()) }
+        btnTerminar.setOnClickListener { buttonClickListener(btnTerminar.text.toString()) }
+        btnComida.setOnClickListener { buttonClickListener(btnComida.text.toString()) }
+
         Wearable.getMessageClient(this).addListener(this)
 
-        // Menú lateral
         val drawerLayout = findViewById<DrawerLayout>(R.id.drawer_layout)
         val navView = findViewById<NavigationView>(R.id.nav_view)
-        val headerView = navView.getHeaderView(0) // Obtiene el primer header
+        val headerView = navView.getHeaderView(0)
         val tvNombreUsuarioHeader = headerView.findViewById<TextView>(R.id.tvNombreUsuario)
         tvNombreUsuarioHeader.text = nombre
 
         navView.setNavigationItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
-                R.id.nav_inicio -> {
-                    startActivity(Intent(this, MainActivity::class.java))
-                }
-                R.id.nav_vista1 -> {
-                    startActivity(Intent(this, HistoricoActivity::class.java))
-                }
-                R.id.nav_vista2 -> {
-                    startActivity(Intent(this, UserDetailActivity::class.java))
-                }
+                R.id.nav_inicio -> startActivity(Intent(this, MainActivity::class.java))
+                R.id.nav_vista1 -> startActivity(Intent(this, HistoricoActivity::class.java))
+                R.id.nav_vista2 -> startActivity(Intent(this, UserDetailActivity::class.java))
             }
             drawerLayout.closeDrawers()
             true
@@ -80,31 +125,54 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
         val mensaje = String(event.data)
         Log.d("PhoneApp", "Mensaje recibido: $mensaje")
 
-        // Enviar broadcast para que HistoricoActivity lo procese
         val intent = Intent("com.example.appprevent.ACTUALIZAR_HISTORICO")
         intent.putExtra("mensaje", mensaje)
         sendBroadcast(intent)
 
-        // Actualizar recyclerView en MainActivity
+        // Solo agregar al buffer y a UI, NO insertar todavía
+        bufferDatos.add(mensaje)
+
         runOnUiThread {
             datosRecibidos.add(mensaje)
             adapter.notifyItemInserted(datosRecibidos.size - 1)
+            rvDatos.scrollToPosition(datosRecibidos.size - 1)
         }
+    }
 
-        // Enviar dato a API local
-        val dato = DatoRequest(mensaje)
-        api.enviarDato(dato).enqueue(object : Callback<DatoRequest> {
-            override fun onResponse(call: Call<DatoRequest>, response: Response<DatoRequest>) {
-                Log.d("API Local", "Dato enviado correctamente: ${response.body()?.mensaje}")
-            }
+    private suspend fun insertarBufferEnDB(): Boolean {
+        if (bufferDatos.isEmpty()) return true // No hay nada que insertar, no es error
+        return try {
+            val copiaBuffer = bufferDatos.toList()
+            val listaEntidad = copiaBuffer.map { DatoEntity(mensaje = it) }
+            datoDao.insertarDatos(listaEntidad)
+            bufferDatos.clear()
+            Log.d("DB", "Inserción batch exitosa, ${listaEntidad.size} elementos guardados")
+            true
+        } catch (e: Exception) {
+            Log.e("DB", "Error al insertar datos: ${e.message}")
+            false
+        }
+    }
 
-            override fun onFailure(call: Call<DatoRequest>, t: Throwable) {
-                Log.e("API Local", "Error al enviar dato", t)
+    private fun cargarDatosDesdeBD() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            val datosEnBD = datoDao.obtenerDatos()
+            val mensajes = datosEnBD.map { it.mensaje }
+            runOnUiThread {
+                datosRecibidos.clear()
+                datosRecibidos.addAll(mensajes)
+                adapter.notifyDataSetChanged()
+                if (mensajes.isNotEmpty()) {
+                    rvDatos.scrollToPosition(mensajes.size - 1)
+                }
             }
-        })
+        }
     }
 
     override fun onDestroy() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            insertarBufferEnDB() // insertar lo que quede pendiente
+        }
         super.onDestroy()
         Wearable.getMessageClient(this).removeListener(this)
     }

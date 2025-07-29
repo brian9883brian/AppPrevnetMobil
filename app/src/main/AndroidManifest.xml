@@ -16,14 +16,7 @@
         android:theme="@style/Theme.AppPrevent"
         android:usesCleartextTraffic="true"
         android:networkSecurityConfig="@xml/network_security_config">
-        <receiver
-            android:name=".HistoricoReceiver"
-            android:enabled="true"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="com.example.appprevent.ACTUALIZAR_HISTORICO" />
-            </intent-filter>
-        </receiver>
+
 
         <!-- LoginActivity ahora es la pantalla inicial -->
         <activity
@@ -40,6 +33,7 @@
         <activity android:name=".RegisterActivity" />
         <activity android:name=".UserDetailActivity" />
         <activity android:name=".HistoricoActivity" />
+        <activity android:name=".RecuperarPasswordActivity" />
 
         <!-- MainActivity sigue como está, pero sin el intent-filter de inicio -->
         <activity

@@ -25,6 +25,9 @@ class RegisterActivity : AppCompatActivity() {
         val etTelefono = findViewById<EditText>(R.id.etTelefono)
         val etDomicilio = findViewById<EditText>(R.id.etDomicilio)
         val etFamiliar = findViewById<EditText>(R.id.etFamiliar)
+        val etPregunta = findViewById<EditText>(R.id.etPregunta)         // NUEVO
+        val etRespuesta = findViewById<EditText>(R.id.etRespuesta)       // NUEVO
+
         val btnRegistrar = findViewById<Button>(R.id.btnRegistrar)
 
         btnRegistrar.setOnClickListener {
@@ -36,10 +39,13 @@ class RegisterActivity : AppCompatActivity() {
             val telefono = etTelefono.text.toString().trim()
             val domicilio = etDomicilio.text.toString().trim()
             val familiar = etFamiliar.text.toString().trim()
+            val preguntaSecreta = etPregunta.text.toString().trim()          // NUEVO
+            val respuestaSecreta = etRespuesta.text.toString().trim()        // NUEVO
 
-            // Validación básica
+            // Validación básica (agregados pregunta y respuesta secreta)
             if (usuario.isEmpty() || nombre.isEmpty() || apellidos.isEmpty() || contraseña.isEmpty() ||
-                correo.isEmpty() || telefono.isEmpty() || domicilio.isEmpty() || familiar.isEmpty()) {
+                correo.isEmpty() || telefono.isEmpty() || domicilio.isEmpty() || familiar.isEmpty() ||
+                preguntaSecreta.isEmpty() || respuestaSecreta.isEmpty()) {
                 Toast.makeText(this, "Por favor completa todos los campos", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
@@ -61,6 +67,8 @@ class RegisterActivity : AppCompatActivity() {
                         put("telefono", telefono)
                         put("domicilio", domicilio)
                         put("familiar", familiar)
+                        put("preguntaSecreta", preguntaSecreta)       // NUEVO
+                        put("respuestaSecreta", respuestaSecreta)     // NUEVO
                     }
 
                     Log.d("RegistroJSON", json.toString())

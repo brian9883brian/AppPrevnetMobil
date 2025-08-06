@@ -1,3 +1,4 @@
+// MainActivity.kt
 package com.example.appprevent
 
 import java.net.URL
@@ -26,12 +27,15 @@ import com.google.android.gms.location.LocationServices
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationResult
 import com.google.gson.Gson
 
-// Clase para el payload JSON
+// Estructura nueva para el buffer
+data class RegistroBuffer(
+    val dato: String,
+    val ubicacion: String?,
+    val guid: String
+)
+
 data class EventoPayload(
     val evento: String,
     val latitud: Double,
@@ -51,7 +55,7 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
 
     private lateinit var tvNombreUsuario: TextView
 
-    private val bufferDatos = mutableListOf<String>()
+    private val bufferDatos = mutableListOf<RegistroBuffer>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -93,7 +97,7 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
         val btnComida = findViewById<MaterialButton>(R.id.btnComida)
 
         btnBano.setOnClickListener { manejarClickBoton(btnBano.text.toString()) }
-        btnTerminar.setOnClickListener { (btnTerminar.text.toString()) }
+        btnTerminar.setOnClickListener { manejarClickBoton(btnTerminar.text.toString()) }
         btnComida.setOnClickListener { manejarClickBoton(btnComida.text.toString()) }
 
         Wearable.getMessageClient(this).addListener(this)
@@ -115,58 +119,56 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
         }
     }
 
+    private fun crearRegistroDesdeTexto(texto: String, ubicacionActual: String?): RegistroBuffer {
+        val caidaRegex = Regex("(POSIBLE CAIDA|CAIDA) en lat:([\\d.-]+), lon:([\\d.-]+)", RegexOption.IGNORE_CASE)
+        val match = caidaRegex.find(texto)
+        return if (match != null) {
+            val tipoCaida = match.groupValues[1].uppercase()
+            val lat = match.groupValues[2]
+            val lon = match.groupValues[3]
+            RegistroBuffer(
+                dato = tipoCaida,
+                ubicacion = "lat=$lat, lon=$lon",
+                guid = guid
+            )
+        } else {
+            RegistroBuffer(
+                dato = texto,
+                ubicacion = ubicacionActual,
+                guid = guid
+            )
+        }
+    }
+
     private fun manejarClickBoton(buttonText: String) {
         Toast.makeText(this, buttonText, Toast.LENGTH_SHORT).show()
 
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                1001
-            )
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1001)
             return
         }
 
         fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
-            val ubicacion = if (location != null) {
-                "Ubicación actual: lat=${location.latitude}, lon=${location.longitude}"
-            } else {
-                "Ubicación no disponible"
-            }
+            val ubicacionStr = location?.let { "lat=${it.latitude}, lon=${it.longitude}" }
+
+            val registro = crearRegistroDesdeTexto(buttonText, ubicacionStr)
 
             lifecycleScope.launch(Dispatchers.IO) {
-                bufferDatos.add(buttonText)
-                bufferDatos.add(ubicacion)
-
+                bufferDatos.add(registro)
                 val copiaBuffer = bufferDatos.toList()
-                val bufferInsertExito = insertarBufferEnDB()
+                insertarBufferEnDB()
 
-                var botonInsertExito = false
                 try {
-                    datoDao.insertarDato(DatoEntity(mensaje = buttonText))
-                    botonInsertExito = true
+                    datoDao.insertarDato(DatoEntity(mensaje = registro.dato))
                 } catch (e: Exception) {
-                    Log.e("DB", "Error al insertar dato botón: ${e.message}")
+                    Log.e("DB", "Error al insertar dato del botón: ${e.message}")
                 }
 
                 Log.d("API", "Buffer antes de enviar: $copiaBuffer")
                 enviarDatosAlAPI(copiaBuffer)
 
                 launch(Dispatchers.Main) {
-                    if (bufferInsertExito && botonInsertExito) {
-                        Toast.makeText(this@MainActivity, "Datos guardados correctamente", Toast.LENGTH_SHORT).show()
-                        Log.d("DB", "Buffer y botón insertados correctamente")
-                    } else if (!bufferInsertExito && !botonInsertExito) {
-                        Toast.makeText(this@MainActivity, "Error al guardar datos (buffer y botón)", Toast.LENGTH_LONG).show()
-                    } else if (!bufferInsertExito) {
-                        Toast.makeText(this@MainActivity, "Error al guardar datos del buffer", Toast.LENGTH_LONG).show()
-                    } else if (!botonInsertExito) {
-                        Toast.makeText(this@MainActivity, "Error al guardar dato del botón", Toast.LENGTH_LONG).show()
-                    }
+                    Toast.makeText(this@MainActivity, "Datos guardados correctamente", Toast.LENGTH_SHORT).show()
                 }
             }
 
@@ -176,55 +178,43 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
                 adapter.notifyDataSetChanged()
                 rvDatos.scrollToPosition(datosRecibidos.size - 1)
 
-                // 🔁 ENVÍA BROADCAST A HistoricoActivity
                 val intent = Intent("com.example.appprevent.ACTUALIZAR_HISTORICO")
                 intent.putExtra("mensaje", buttonText)
                 sendBroadcast(intent)
             }
-
         }
     }
 
-    private fun enviarDatosAlAPI(datos: List<String>) {
-        Log.d("API", "Simulando envío de datos: $datos")
-
-        if (datos.size < 2) {
-            Log.e("API", "No hay suficientes datos para enviar")
-            return
-        }
-
-        val evento = datos[0]
-        val ubicacion = datos[1]
-
-        // Extraer latitud y longitud de la cadena
-        val latitudRegex = Regex("lat=([\\d.-]+)")
-        val longitudRegex = Regex("lon=([\\d.-]+)")
-
-        val lat = latitudRegex.find(ubicacion)?.groupValues?.get(1)?.toDoubleOrNull()
-        val lon = longitudRegex.find(ubicacion)?.groupValues?.get(1)?.toDoubleOrNull()
-
-        if (lat == null || lon == null) {
-            Log.e("API", "Latitud o longitud no válida en la ubicación: $ubicacion")
-            return
-        }
-
-        val payload = EventoPayload(
-            evento = evento,
-            latitud = lat,
-            longitud = lon
-        )
-
+    private fun enviarDatosAlAPI(datos: List<RegistroBuffer>) {
         val gson = Gson()
-        val json = gson.toJson(payload)
-
-        Log.d("API", "Simulando JSON a enviar: $json")
+        val json = gson.toJson(datos)
+        Log.d("API", "Enviando datos: $json")
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                Thread.sleep(500)
-                Log.d("API", "Simulación de envío completada exitosamente")
-            } catch (e: InterruptedException) {
-                Log.e("API", "Simulación interrumpida: ${e.message}")
+                val url = URL("https://lanube-280581492272.us-central1.run.app/api/alertas/integradas")
+                val connection = url.openConnection() as HttpURLConnection
+                connection.requestMethod = "POST"
+                connection.setRequestProperty("Content-Type", "application/json")
+                connection.doOutput = true
+
+                connection.outputStream.use { os ->
+                    val input = json.toByteArray(Charsets.UTF_8)
+                    os.write(input, 0, input.size)
+                    os.flush()
+                }
+
+                val responseCode = connection.responseCode
+                if (responseCode == HttpURLConnection.HTTP_OK || responseCode == HttpURLConnection.HTTP_CREATED) {
+                    Log.d("API", "Datos enviados correctamente, código: $responseCode")
+                } else {
+                    Log.e("API", "Error al enviar datos, código: $responseCode")
+                }
+
+                connection.disconnect()
+
+            } catch (e: Exception) {
+                Log.e("API", "Excepción al enviar datos: ${e.message}")
             }
         }
     }
@@ -237,7 +227,8 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
         intent.putExtra("mensaje", mensaje)
         sendBroadcast(intent)
 
-        bufferDatos.add(mensaje)
+        val registro = crearRegistroDesdeTexto(mensaje, null) // No ubicación para mensajes wearable
+        bufferDatos.add(registro)
 
         runOnUiThread {
             datosRecibidos.add(mensaje)
@@ -249,8 +240,7 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
     private suspend fun insertarBufferEnDB(): Boolean {
         if (bufferDatos.isEmpty()) return true
         return try {
-            val copiaBuffer = bufferDatos.toList()
-            val listaEntidad = copiaBuffer.map { DatoEntity(mensaje = it) }
+            val listaEntidad = bufferDatos.map { DatoEntity(mensaje = it.dato) }
             datoDao.insertarDatos(listaEntidad)
             bufferDatos.clear()
             Log.d("DB", "Inserción batch exitosa, ${listaEntidad.size} elementos guardados")

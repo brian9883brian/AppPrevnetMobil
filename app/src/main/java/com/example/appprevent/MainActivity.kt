@@ -1,4 +1,5 @@
 package com.example.appprevent
+
 import java.net.URL
 import java.net.HttpURLConnection
 import android.content.Intent
@@ -19,6 +20,16 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.navigation.NavigationView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import android.location.Location
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
+
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationResult
 
 class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListener {
 
@@ -26,18 +37,19 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
     private lateinit var adapter: DatoAdapter
     private val datosRecibidos = mutableListOf<String>()
     private var guid: String = ""
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     private lateinit var db: AppDatabase
     private lateinit var datoDao: DatoDao
 
     private lateinit var tvNombreUsuario: TextView
 
-    // Buffer temporal para acumular mensajes antes de guardar
     private val bufferDatos = mutableListOf<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         db = Room.databaseBuilder(
             applicationContext,
@@ -49,10 +61,8 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
         val prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE)
         val nombre = prefs.getString("usuario_nombre", "Usuario") ?: "Usuario"
 
-        // Recibir guid del intent
-        val guid = intent.getStringExtra("guid") ?: prefs.getString("usuario_guid", "") ?: ""
+        guid = intent.getStringExtra("guid") ?: prefs.getString("usuario_guid", "") ?: ""
 
-        // Guardar guid en SharedPreferences para futuras sesiones
         with(prefs.edit()) {
             putString("usuario_guid", guid)
             apply()
@@ -61,7 +71,6 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
         tvNombreUsuario = findViewById(R.id.tvNombreUsuario)
         tvNombreUsuario.text = "Hola, $nombre"
 
-        // Mostrar guid en TextView (opcional, crea uno en tu layout con id tvGuid)
         val tvGuid = findViewById<TextView?>(R.id.tvGuid)
         tvGuid?.text = "GUID: $guid"
 
@@ -76,12 +85,56 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
         val btnTerminar = findViewById<MaterialButton>(R.id.btnTerminar)
         val btnComida = findViewById<MaterialButton>(R.id.btnComida)
 
-        val buttonClickListener = { buttonText: String ->
-            Toast.makeText(this, buttonText, Toast.LENGTH_SHORT).show()
+        // Cambié la lambda por función nombrada (ver función abajo)
+        btnBano.setOnClickListener { manejarClickBoton(btnBano.text.toString()) }
+        btnTerminar.setOnClickListener { manejarClickBoton(btnTerminar.text.toString()) }
+        btnComida.setOnClickListener { manejarClickBoton(btnComida.text.toString()) }
+
+        Wearable.getMessageClient(this).addListener(this)
+
+        val drawerLayout = findViewById<DrawerLayout>(R.id.drawer_layout)
+        val navView = findViewById<NavigationView>(R.id.nav_view)
+        val headerView = navView.getHeaderView(0)
+        val tvNombreUsuarioHeader = headerView.findViewById<TextView>(R.id.tvNombreUsuario)
+        tvNombreUsuarioHeader.text = nombre
+
+        navView.setNavigationItemSelectedListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.nav_inicio -> startActivity(Intent(this, MainActivity::class.java))
+                R.id.nav_vista1 -> startActivity(Intent(this, HistoricoActivity::class.java))
+                R.id.nav_vista2 -> startActivity(Intent(this, UserDetailActivity::class.java))
+            }
+            drawerLayout.closeDrawers()
+            true
+        }
+    }
+
+    private fun manejarClickBoton(buttonText: String) {
+        Toast.makeText(this, buttonText, Toast.LENGTH_SHORT).show()
+
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                1001
+            )
+            return
+        }
+
+        fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
+            val ubicacion = if (location != null) {
+                "Ubicación actual: lat=${location.latitude}, lon=${location.longitude}"
+            } else {
+                "Ubicación no disponible"
+            }
 
             lifecycleScope.launch(Dispatchers.IO) {
-                // Primero agrega el botón al buffer
                 bufferDatos.add(buttonText)
+                bufferDatos.add(ubicacion)
 
                 val copiaBuffer = bufferDatos.toList()
                 val bufferInsertExito = insertarBufferEnDB()
@@ -95,7 +148,7 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
                 }
 
                 Log.d("API", "Buffer antes de enviar: $copiaBuffer")
-                enviarDatosAlAPI(copiaBuffer)  // Enviar el buffer completo, ya con el botón incluido
+                enviarDatosAlAPI(copiaBuffer)
 
                 launch(Dispatchers.Main) {
                     if (bufferInsertExito && botonInsertExito) {
@@ -118,31 +171,6 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
                 rvDatos.scrollToPosition(datosRecibidos.size - 1)
             }
         }
-
-
-
-
-        btnBano.setOnClickListener { buttonClickListener(btnBano.text.toString()) }
-        btnTerminar.setOnClickListener { buttonClickListener(btnTerminar.text.toString()) }
-        btnComida.setOnClickListener { buttonClickListener(btnComida.text.toString()) }
-
-        Wearable.getMessageClient(this).addListener(this)
-
-        val drawerLayout = findViewById<DrawerLayout>(R.id.drawer_layout)
-        val navView = findViewById<NavigationView>(R.id.nav_view)
-        val headerView = navView.getHeaderView(0)
-        val tvNombreUsuarioHeader = headerView.findViewById<TextView>(R.id.tvNombreUsuario)
-        tvNombreUsuarioHeader.text = nombre
-
-        navView.setNavigationItemSelectedListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.nav_inicio -> startActivity(Intent(this, MainActivity::class.java))
-                R.id.nav_vista1 -> startActivity(Intent(this, HistoricoActivity::class.java))
-                R.id.nav_vista2 -> startActivity(Intent(this, UserDetailActivity::class.java))
-            }
-            drawerLayout.closeDrawers()
-            true
-        }
     }
 
     override fun onMessageReceived(event: MessageEvent) {
@@ -153,7 +181,6 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
         intent.putExtra("mensaje", mensaje)
         sendBroadcast(intent)
 
-        // Solo agregar al buffer y a UI, NO insertar todavía
         bufferDatos.add(mensaje)
 
         runOnUiThread {
@@ -164,7 +191,7 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
     }
 
     private suspend fun insertarBufferEnDB(): Boolean {
-        if (bufferDatos.isEmpty()) return true // No hay nada que insertar, no es error
+        if (bufferDatos.isEmpty()) return true
         return try {
             val copiaBuffer = bufferDatos.toList()
             val listaEntidad = copiaBuffer.map { DatoEntity(mensaje = it) }
@@ -177,22 +204,21 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
             false
         }
     }
+
     private fun enviarDatosAlAPI(datos: List<String>) {
         Log.d("API", "Simulando envío de datos: $datos")
-
         val json = datos.joinToString(prefix = "[", postfix = "]") { "\"$it\"" }
         Log.d("API", "Simulando JSON a enviar: $json")
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                Thread.sleep(500) // Simulación de tiempo de espera al enviar
+                Thread.sleep(500)
                 Log.d("API", "Simulación de envío completada exitosamente")
             } catch (e: InterruptedException) {
                 Log.e("API", "Simulación interrumpida: ${e.message}")
             }
         }
     }
-
 
     private fun cargarDatosDesdeBD() {
         lifecycleScope.launch(Dispatchers.IO) {
@@ -211,7 +237,7 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
 
     override fun onDestroy() {
         lifecycleScope.launch(Dispatchers.IO) {
-            insertarBufferEnDB() // insertar lo que quede pendiente
+            insertarBufferEnDB()
         }
         super.onDestroy()
         Wearable.getMessageClient(this).removeListener(this)

@@ -26,10 +26,17 @@ import com.google.android.gms.location.LocationServices
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
-
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationResult
+import com.google.gson.Gson
+
+// Clase para el payload JSON
+data class EventoPayload(
+    val evento: String,
+    val latitud: Double,
+    val longitud: Double
+)
 
 class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListener {
 
@@ -85,9 +92,8 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
         val btnTerminar = findViewById<MaterialButton>(R.id.btnTerminar)
         val btnComida = findViewById<MaterialButton>(R.id.btnComida)
 
-        // Cambié la lambda por función nombrada (ver función abajo)
         btnBano.setOnClickListener { manejarClickBoton(btnBano.text.toString()) }
-        btnTerminar.setOnClickListener { manejarClickBoton(btnTerminar.text.toString()) }
+        btnTerminar.setOnClickListener { (btnTerminar.text.toString()) }
         btnComida.setOnClickListener { manejarClickBoton(btnComida.text.toString()) }
 
         Wearable.getMessageClient(this).addListener(this)
@@ -169,6 +175,56 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
                 datosRecibidos.add(buttonText)
                 adapter.notifyDataSetChanged()
                 rvDatos.scrollToPosition(datosRecibidos.size - 1)
+
+                // 🔁 ENVÍA BROADCAST A HistoricoActivity
+                val intent = Intent("com.example.appprevent.ACTUALIZAR_HISTORICO")
+                intent.putExtra("mensaje", buttonText)
+                sendBroadcast(intent)
+            }
+
+        }
+    }
+
+    private fun enviarDatosAlAPI(datos: List<String>) {
+        Log.d("API", "Simulando envío de datos: $datos")
+
+        if (datos.size < 2) {
+            Log.e("API", "No hay suficientes datos para enviar")
+            return
+        }
+
+        val evento = datos[0]
+        val ubicacion = datos[1]
+
+        // Extraer latitud y longitud de la cadena
+        val latitudRegex = Regex("lat=([\\d.-]+)")
+        val longitudRegex = Regex("lon=([\\d.-]+)")
+
+        val lat = latitudRegex.find(ubicacion)?.groupValues?.get(1)?.toDoubleOrNull()
+        val lon = longitudRegex.find(ubicacion)?.groupValues?.get(1)?.toDoubleOrNull()
+
+        if (lat == null || lon == null) {
+            Log.e("API", "Latitud o longitud no válida en la ubicación: $ubicacion")
+            return
+        }
+
+        val payload = EventoPayload(
+            evento = evento,
+            latitud = lat,
+            longitud = lon
+        )
+
+        val gson = Gson()
+        val json = gson.toJson(payload)
+
+        Log.d("API", "Simulando JSON a enviar: $json")
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                Thread.sleep(500)
+                Log.d("API", "Simulación de envío completada exitosamente")
+            } catch (e: InterruptedException) {
+                Log.e("API", "Simulación interrumpida: ${e.message}")
             }
         }
     }
@@ -202,21 +258,6 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
         } catch (e: Exception) {
             Log.e("DB", "Error al insertar datos: ${e.message}")
             false
-        }
-    }
-
-    private fun enviarDatosAlAPI(datos: List<String>) {
-        Log.d("API", "Simulando envío de datos: $datos")
-        val json = datos.joinToString(prefix = "[", postfix = "]") { "\"$it\"" }
-        Log.d("API", "Simulando JSON a enviar: $json")
-
-        lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                Thread.sleep(500)
-                Log.d("API", "Simulación de envío completada exitosamente")
-            } catch (e: InterruptedException) {
-                Log.e("API", "Simulación interrumpida: ${e.message}")
-            }
         }
     }
 

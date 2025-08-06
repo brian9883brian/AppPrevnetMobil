@@ -1,63 +1,76 @@
 package com.example.appprevent
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import java.text.SimpleDateFormat
+import java.util.*
 
 class HistoricoActivity : AppCompatActivity() {
+
+    private lateinit var contenedorA: LinearLayout
+    private lateinit var contenedorB: LinearLayout
+    private lateinit var contenedorC: LinearLayout
+    private lateinit var inflater: LayoutInflater
+
+    private val broadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val mensaje = intent?.getStringExtra("mensaje") ?: return
+            runOnUiThread {
+                agregarNuevoDato(mensaje)
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_historico)
 
-        val contenedorA = findViewById<LinearLayout>(R.id.contenedorSensorA)
-        val contenedorB = findViewById<LinearLayout>(R.id.contenedorSensorB)
-        val contenedorC = findViewById<LinearLayout>(R.id.contenedorSensorC)
-        val inflater = LayoutInflater.from(this)
+        contenedorA = findViewById(R.id.contenedorSensorA)
+        contenedorB = findViewById(R.id.contenedorSensorB)
+        contenedorC = findViewById(R.id.contenedorSensorC)
+        inflater = LayoutInflater.from(this)
 
-        // Sensor A - ejemplo con dos tarjetas
-        val cardA1 = inflater.inflate(R.layout.item_card_historico, contenedorA, false)
-        cardA1.findViewById<TextView>(R.id.tvTituloSensor).text = "Sensor A"
-        cardA1.findViewById<TextView>(R.id.tvFecha).text = "2025-07-01"
-        cardA1.findViewById<TextView>(R.id.tvValorX).text = "100"
-        cardA1.findViewById<TextView>(R.id.tvValorY).text = "200"
-        cardA1.findViewById<TextView>(R.id.tvValorZ).text = "300"
-        contenedorA.addView(cardA1)
+        // Datos de ejemplo (opcional)
+        // agregarNuevoDato("Velocidad alta detectada")
+        // agregarNuevoDato("Mensaje de caída recibido")
 
-        val cardA2 = inflater.inflate(R.layout.item_card_historico, contenedorA, false)
-        cardA2.findViewById<TextView>(R.id.tvTituloSensor).text = "Sensor A"
-        cardA2.findViewById<TextView>(R.id.tvFecha).text = "2025-07-05"
-        cardA2.findViewById<TextView>(R.id.tvValorX).text = "150"
-        cardA2.findViewById<TextView>(R.id.tvValorY).text = "250"
-        cardA2.findViewById<TextView>(R.id.tvValorZ).text = "350"
-        contenedorA.addView(cardA2)
+        registerReceiver(broadcastReceiver, IntentFilter("com.example.appprevent.ACTUALIZAR_HISTORICO"))
+    }
 
-        // Sensor B - ejemplo con una tarjeta
-        val cardB1 = inflater.inflate(R.layout.item_card_historico, contenedorB, false)
-        cardB1.findViewById<TextView>(R.id.tvTituloSensor).text = "Sensor B"
-        cardB1.findViewById<TextView>(R.id.tvFecha).text = "2025-07-02"
-        cardB1.findViewById<TextView>(R.id.tvValorX).text = "10"
-        cardB1.findViewById<TextView>(R.id.tvValorY).text = "20"
-        cardB1.findViewById<TextView>(R.id.tvValorZ).text = "30"
-        contenedorB.addView(cardB1)
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(broadcastReceiver)
+    }
 
-        // Sensor C - ejemplo con dos tarjetas
-        val cardC1 = inflater.inflate(R.layout.item_card_historico, contenedorC, false)
-        cardC1.findViewById<TextView>(R.id.tvTituloSensor).text = "Sensor C"
-        cardC1.findViewById<TextView>(R.id.tvFecha).text = "2025-07-03"
-        cardC1.findViewById<TextView>(R.id.tvValorX).text = "999"
-        cardC1.findViewById<TextView>(R.id.tvValorY).text = "888"
-        cardC1.findViewById<TextView>(R.id.tvValorZ).text = "777"
-        contenedorC.addView(cardC1)
+    private fun agregarNuevoDato(mensaje: String) {
+        val contenedor = when {
+            mensaje.contains("Velocidad", ignoreCase = true) -> contenedorA
+            mensaje.contains("Caída", ignoreCase = true) -> contenedorB
+            else -> contenedorC
+        }
 
-        val cardC2 = inflater.inflate(R.layout.item_card_historico, contenedorC, false)
-        cardC2.findViewById<TextView>(R.id.tvTituloSensor).text = "Sensor C"
-        cardC2.findViewById<TextView>(R.id.tvFecha).text = "2025-07-06"
-        cardC2.findViewById<TextView>(R.id.tvValorX).text = "111"
-        cardC2.findViewById<TextView>(R.id.tvValorY).text = "222"
-        cardC2.findViewById<TextView>(R.id.tvValorZ).text = "333"
-        contenedorC.addView(cardC2)
+        val card = inflater.inflate(R.layout.item_card_historico, contenedor, false)
+        card.findViewById<TextView>(R.id.tvTituloSensor).text = when (contenedor) {
+            contenedorA -> "Sensor A"
+            contenedorB -> "Sensor B"
+            else -> "Sensor C"
+        }
+        card.findViewById<TextView>(R.id.tvFecha).text = obtenerFechaActual()
+        card.findViewById<TextView>(R.id.tvValorX).text = mensaje
+        card.findViewById<TextView>(R.id.tvValorY).text = "-"
+        card.findViewById<TextView>(R.id.tvValorZ).text = "-"
+        contenedor.addView(card, 0) // Agrega al inicio
+    }
+
+    private fun obtenerFechaActual(): String {
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        return sdf.format(Date())
     }
 }

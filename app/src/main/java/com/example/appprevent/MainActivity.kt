@@ -1,5 +1,6 @@
 package com.example.appprevent
-
+import java.net.URL
+import java.net.HttpURLConnection
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -79,7 +80,12 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
             Toast.makeText(this, buttonText, Toast.LENGTH_SHORT).show()
 
             lifecycleScope.launch(Dispatchers.IO) {
+                // Primero agrega el botón al buffer
+                bufferDatos.add(buttonText)
+
+                val copiaBuffer = bufferDatos.toList()
                 val bufferInsertExito = insertarBufferEnDB()
+
                 var botonInsertExito = false
                 try {
                     datoDao.insertarDato(DatoEntity(mensaje = buttonText))
@@ -87,6 +93,9 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
                 } catch (e: Exception) {
                     Log.e("DB", "Error al insertar dato botón: ${e.message}")
                 }
+
+                Log.d("API", "Buffer antes de enviar: $copiaBuffer")
+                enviarDatosAlAPI(copiaBuffer)  // Enviar el buffer completo, ya con el botón incluido
 
                 launch(Dispatchers.Main) {
                     if (bufferInsertExito && botonInsertExito) {
@@ -103,14 +112,15 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
             }
 
             runOnUiThread {
-                datosRecibidos.addAll(bufferDatos)
-                bufferDatos.clear()
-
+                datosRecibidos.clear()
                 datosRecibidos.add(buttonText)
                 adapter.notifyDataSetChanged()
                 rvDatos.scrollToPosition(datosRecibidos.size - 1)
             }
         }
+
+
+
 
         btnBano.setOnClickListener { buttonClickListener(btnBano.text.toString()) }
         btnTerminar.setOnClickListener { buttonClickListener(btnTerminar.text.toString()) }
@@ -167,6 +177,22 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
             false
         }
     }
+    private fun enviarDatosAlAPI(datos: List<String>) {
+        Log.d("API", "Simulando envío de datos: $datos")
+
+        val json = datos.joinToString(prefix = "[", postfix = "]") { "\"$it\"" }
+        Log.d("API", "Simulando JSON a enviar: $json")
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                Thread.sleep(500) // Simulación de tiempo de espera al enviar
+                Log.d("API", "Simulación de envío completada exitosamente")
+            } catch (e: InterruptedException) {
+                Log.e("API", "Simulación interrumpida: ${e.message}")
+            }
+        }
+    }
+
 
     private fun cargarDatosDesdeBD() {
         lifecycleScope.launch(Dispatchers.IO) {

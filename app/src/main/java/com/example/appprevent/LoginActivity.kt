@@ -57,7 +57,7 @@ class LoginActivity : AppCompatActivity() {
     private fun iniciarSesion(usuario: String, contraseña: String) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val url = URL("https://laniebla-vol2.onrender.com/api/auth/login") // ← Cambia IP si no estás en emulador
+                val url = URL("https://laniebla-vol2.onrender.com/api/auth/login")
                 val conn = url.openConnection() as HttpURLConnection
                 conn.requestMethod = "POST"
                 conn.setRequestProperty("Content-Type", "application/json")
@@ -78,25 +78,32 @@ class LoginActivity : AppCompatActivity() {
                     val jsonResponse = JSONObject(responseStream)
                     val mensaje = jsonResponse.getString("mensaje")
 
-                    // Aquí obtén más datos si vienen en la respuesta
                     val nombreUsuario = jsonResponse.optString("nombre", usuario)
                     val correoUsuario = jsonResponse.optString("correo", "")
                     val telefonoUsuario = jsonResponse.optString("telefono", "")
                     val direccionUsuario = jsonResponse.optString("direccion", "")
+                    val guidUsuario = jsonResponse.optString("guid", "") // <- Extraemos guid
 
                     withContext(Dispatchers.Main) {
-                        // Guardar datos en SharedPreferences
                         val prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE)
                         with(prefs.edit()) {
                             putString("usuario_nombre", nombreUsuario)
                             putString("usuario_correo", correoUsuario)
                             putString("usuario_telefono", telefonoUsuario)
                             putString("usuario_direccion", direccionUsuario)
+                            putString("usuario_guid", guidUsuario) // Guarda guid también
                             apply()
                         }
 
                         Toast.makeText(applicationContext, mensaje, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(applicationContext, "GUID: $guidUsuario", Toast.LENGTH_LONG).show() // Mostrar guid
+
                         val intent = Intent(this@LoginActivity, MainActivity::class.java)
+                        intent.putExtra("nombre", nombreUsuario)
+                        intent.putExtra("correo", correoUsuario)
+                        intent.putExtra("telefono", telefonoUsuario)
+                        intent.putExtra("direccion", direccionUsuario)
+                        intent.putExtra("guid", guidUsuario) // Enviar guid al MainActivity
                         startActivity(intent)
                         finish()
                     }
@@ -116,4 +123,5 @@ class LoginActivity : AppCompatActivity() {
             }
         }
     }
+
 }

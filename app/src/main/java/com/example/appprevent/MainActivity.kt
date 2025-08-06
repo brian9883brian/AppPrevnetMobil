@@ -24,6 +24,7 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
     private lateinit var rvDatos: RecyclerView
     private lateinit var adapter: DatoAdapter
     private val datosRecibidos = mutableListOf<String>()
+    private var guid: String = ""
 
     private lateinit var db: AppDatabase
     private lateinit var datoDao: DatoDao
@@ -47,8 +48,21 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
         val prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE)
         val nombre = prefs.getString("usuario_nombre", "Usuario") ?: "Usuario"
 
+        // Recibir guid del intent
+        val guid = intent.getStringExtra("guid") ?: prefs.getString("usuario_guid", "") ?: ""
+
+        // Guardar guid en SharedPreferences para futuras sesiones
+        with(prefs.edit()) {
+            putString("usuario_guid", guid)
+            apply()
+        }
+
         tvNombreUsuario = findViewById(R.id.tvNombreUsuario)
         tvNombreUsuario.text = "Hola, $nombre"
+
+        // Mostrar guid en TextView (opcional, crea uno en tu layout con id tvGuid)
+        val tvGuid = findViewById<TextView?>(R.id.tvGuid)
+        tvGuid?.text = "GUID: $guid"
 
         rvDatos = findViewById(R.id.rvDatos)
         adapter = DatoAdapter(datosRecibidos)

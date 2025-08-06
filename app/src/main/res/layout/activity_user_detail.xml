@@ -1,64 +1,107 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:card_view="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp">
 
-    <androidx.cardview.widget.CardView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        card_view:cardCornerRadius="12dp"
-        card_view:cardElevation="6dp"
-        android:layout_marginBottom="16dp">
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <!-- Imagen del usuario -->
+        <ImageView
+            android:id="@+id/userImage"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:layout_marginBottom="16dp"
+            android:contentDescription="Imagen del usuario"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_user" />
+
+        <!-- GUID -->
+        <TextView
+            android:id="@+id/txtGuid"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:text="GUID: "
+            android:textSize="16sp"
+            android:layout_marginBottom="8dp"
+            android:textStyle="bold" />
 
-            <ImageView
-                android:id="@+id/userImage"
-                android:layout_width="120dp"
-                android:layout_height="120dp"
-                android:layout_gravity="center_horizontal"
-                android:src="@drawable/ic_user"
-                android:contentDescription="Foto del usuario"
-                android:scaleType="centerCrop"
-                android:layout_marginBottom="16dp" />
+        <!-- Nombre -->
+        <TextView
+            android:id="@+id/txtNombre"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Nombre: "
+            android:textSize="16sp"
+            android:layout_marginBottom="4dp" />
 
-            <TextView
-                android:id="@+id/txtNombre"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Nombre: Eduardo Mendoza"
-                android:textSize="18sp"
-                android:layout_marginBottom="8dp" />
+        <!-- Apellidos -->
+        <TextView
+            android:id="@+id/txtApellidos"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Apellidos: "
+            android:textSize="16sp"
+            android:layout_marginBottom="4dp" />
 
-            <TextView
-                android:id="@+id/txtCorreo"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Correo: eduardo@example.com"
-                android:textSize="16sp"
-                android:layout_marginBottom="8dp" />
+        <!-- Usuario -->
+        <TextView
+            android:id="@+id/txtUsuario"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Usuario: "
+            android:textSize="16sp"
+            android:layout_marginBottom="4dp" />
 
-            <TextView
-                android:id="@+id/txtTelefono"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Teléfono: 5512345678"
-                android:textSize="16sp"
-                android:layout_marginBottom="8dp" />
+        <!-- Correo -->
+        <TextView
+            android:id="@+id/txtCorreo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Correo: "
+            android:textSize="16sp"
+            android:layout_marginBottom="4dp" />
 
-            <TextView
-                android:id="@+id/txtDireccion"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Dirección: Calle Falsa 123, CDMX"
-                android:textSize="16sp" />
-        </LinearLayout>
-    </androidx.cardview.widget.CardView>
+        <!-- Teléfono -->
+        <TextView
+            android:id="@+id/txtTelefono"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Teléfono: "
+            android:textSize="16sp"
+            android:layout_marginBottom="4dp" />
 
+        <!-- Domicilio -->
+        <TextView
+            android:id="@+id/txtDomicilio"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Domicilio: "
+            android:textSize="16sp"
+            android:layout_marginBottom="4dp" />
+
+        <!-- Familiar -->
+        <TextView
+            android:id="@+id/txtFamiliar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Familiar: "
+            android:textSize="16sp"
+            android:layout_marginBottom="4dp" />
+
+        <!-- Pregunta secreta -->
+        <TextView
+            android:id="@+id/txtPreguntaSecreta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Pregunta secreta: "
+            android:textSize="16sp"
+            android:layout_marginBottom="8dp"
+            android:visibility="gone" />
+
+    </LinearLayout>
 </ScrollView>

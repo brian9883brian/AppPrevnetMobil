@@ -14,5 +14,7 @@ interface DatoDao {
 
     @Query("SELECT * FROM datos")
     suspend fun obtenerDatos(): List<DatoEntity>
+    @Query("DELETE FROM datos")
+    suspend fun deleteAll()
 }
 // comentario para subir

@@ -79,6 +79,7 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
             apply()
         }
 
+
         tvNombreUsuario = findViewById(R.id.tvNombreUsuario)
         tvNombreUsuario.text = "Hola, $nombre"
 
@@ -89,6 +90,7 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
         adapter = DatoAdapter(datosRecibidos)
         rvDatos.layoutManager = LinearLayoutManager(this)
         rvDatos.adapter = adapter
+// Limpiar el buffer al iniciar sesión
 
         cargarDatosDesdeBD()
 
@@ -210,11 +212,22 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
                 } else {
                     Log.e("API", "Error al enviar datos, código: $responseCode")
                 }
-
+                limpiarBufferCompleto()
                 connection.disconnect()
 
             } catch (e: Exception) {
                 Log.e("API", "Excepción al enviar datos: ${e.message}")
+            }
+        }
+    }
+    private fun limpiarBufferCompleto() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            bufferDatos.clear()
+            datoDao.deleteAll()
+            Log.d("DB", "Buffer y base de datos limpiados correctamente")
+
+            runOnUiThread {
+                Toast.makeText(this@MainActivity, "Buffer y base de datos limpiados", Toast.LENGTH_SHORT).show()
             }
         }
     }

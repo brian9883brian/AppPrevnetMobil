@@ -109,6 +109,13 @@
                 android:textAllCaps="false"
                 android:layout_marginEnd="8dp"
                 style="@style/CustomButton" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDetenerEnvio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Detener envío"
+                app:cornerRadius="8dp"
+                app:backgroundTint="@color/dark_background" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnTerminar"

@@ -21,6 +21,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.navigation.NavigationView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await // 📌 Import necesario para usar await()
 import android.location.Location
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -79,7 +80,6 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
             apply()
         }
 
-
         tvNombreUsuario = findViewById(R.id.tvNombreUsuario)
         tvNombreUsuario.text = "Hola, $nombre"
 
@@ -90,17 +90,21 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
         adapter = DatoAdapter(datosRecibidos)
         rvDatos.layoutManager = LinearLayoutManager(this)
         rvDatos.adapter = adapter
-// Limpiar el buffer al iniciar sesión
 
         cargarDatosDesdeBD()
 
         val btnBano = findViewById<MaterialButton>(R.id.btnBano)
         val btnTerminar = findViewById<MaterialButton>(R.id.btnTerminar)
         val btnComida = findViewById<MaterialButton>(R.id.btnComida)
+        val btnDetenerEnvio = findViewById<MaterialButton>(R.id.btnDetenerEnvio)
 
         btnBano.setOnClickListener { manejarClickBoton(btnBano.text.toString()) }
         btnTerminar.setOnClickListener { manejarClickBoton(btnTerminar.text.toString()) }
         btnComida.setOnClickListener { manejarClickBoton(btnComida.text.toString()) }
+        btnDetenerEnvio.setOnClickListener {
+            enviarMensajeDetener()
+            Toast.makeText(this, "Enviando orden para detener envío", Toast.LENGTH_SHORT).show()
+        }
 
         Wearable.getMessageClient(this).addListener(this)
 
@@ -118,6 +122,22 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
             }
             drawerLayout.closeDrawers()
             true
+        }
+    }
+
+    private fun enviarMensajeDetener() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val nodeList = Wearable.getNodeClient(this@MainActivity).connectedNodes.await()
+                for (node in nodeList) {
+                    Wearable.getMessageClient(this@MainActivity)
+                        .sendMessage(node.id, "/detener_envio", "STOP".toByteArray())
+                        .await()
+                    Log.d("Wear", "Mensaje DETENER enviado a ${node.displayName}")
+                }
+            } catch (e: Exception) {
+                Log.e("Wear", "Error enviando mensaje DETENER: ${e.message}")
+            }
         }
     }
 
@@ -156,8 +176,8 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
             val registro = crearRegistroDesdeTexto(buttonText, ubicacionStr)
 
             lifecycleScope.launch(Dispatchers.IO) {
+                // 1. Agregar registro al buffer y a la BD local
                 bufferDatos.add(registro)
-                val copiaBuffer = bufferDatos.toList()
                 insertarBufferEnDB()
 
                 try {
@@ -166,9 +186,13 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
                     Log.e("DB", "Error al insertar dato del botón: ${e.message}")
                 }
 
-                Log.d("API", "Buffer antes de enviar: $copiaBuffer")
-                enviarDatosAlAPI(copiaBuffer)
+                // 2. Enviar datos al API
+                enviarDatosAlAPI(listOf(registro))
 
+                // 3. Enviar mensaje detener al reloj
+                enviarMensajeDetener()
+
+                // 4. Mostrar Toast en UI thread
                 launch(Dispatchers.Main) {
                     Toast.makeText(this@MainActivity, "Datos guardados correctamente", Toast.LENGTH_SHORT).show()
                 }
@@ -187,11 +211,10 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
         }
     }
 
+
     private fun enviarDatosAlAPI(datos: List<RegistroBuffer>) {
         val gson = Gson()
         val json = gson.toJson(datos)
-        Log.d("API", "Enviando datos: $json")
-
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val url = URL("https://lanube-280581492272.us-central1.run.app/api/alertas/integradas")
@@ -208,24 +231,23 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
 
                 val responseCode = connection.responseCode
                 if (responseCode == HttpURLConnection.HTTP_OK || responseCode == HttpURLConnection.HTTP_CREATED) {
-                    Log.d("API", "Datos enviados correctamente, código: $responseCode")
+                    Log.d("API", "Datos enviados correctamente")
+                    limpiarBufferCompleto()
                 } else {
                     Log.e("API", "Error al enviar datos, código: $responseCode")
                 }
-                limpiarBufferCompleto()
                 connection.disconnect()
-
             } catch (e: Exception) {
                 Log.e("API", "Excepción al enviar datos: ${e.message}")
             }
         }
     }
+
     private fun limpiarBufferCompleto() {
         lifecycleScope.launch(Dispatchers.IO) {
             bufferDatos.clear()
             datoDao.deleteAll()
             Log.d("DB", "Buffer y base de datos limpiados correctamente")
-
             runOnUiThread {
                 Toast.makeText(this@MainActivity, "Buffer y base de datos limpiados", Toast.LENGTH_SHORT).show()
             }
@@ -240,7 +262,7 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
         intent.putExtra("mensaje", mensaje)
         sendBroadcast(intent)
 
-        val registro = crearRegistroDesdeTexto(mensaje, null) // No ubicación para mensajes wearable
+        val registro = crearRegistroDesdeTexto(mensaje, null)
         bufferDatos.add(registro)
 
         runOnUiThread {
@@ -256,7 +278,7 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
             val listaEntidad = bufferDatos.map { DatoEntity(mensaje = it.dato) }
             datoDao.insertarDatos(listaEntidad)
             bufferDatos.clear()
-            Log.d("DB", "Inserción batch exitosa, ${listaEntidad.size} elementos guardados")
+            Log.d("DB", "Inserción batch exitosa")
             true
         } catch (e: Exception) {
             Log.e("DB", "Error al insertar datos: ${e.message}")
@@ -280,9 +302,7 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
     }
 
     override fun onDestroy() {
-        lifecycleScope.launch(Dispatchers.IO) {
-            insertarBufferEnDB()
-        }
+        lifecycleScope.launch(Dispatchers.IO) { insertarBufferEnDB() }
         super.onDestroy()
         Wearable.getMessageClient(this).removeListener(this)
     }

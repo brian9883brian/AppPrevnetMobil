@@ -96,15 +96,11 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
         val btnBano = findViewById<MaterialButton>(R.id.btnBano)
         val btnTerminar = findViewById<MaterialButton>(R.id.btnTerminar)
         val btnComida = findViewById<MaterialButton>(R.id.btnComida)
-        val btnDetenerEnvio = findViewById<MaterialButton>(R.id.btnDetenerEnvio)
 
         btnBano.setOnClickListener { manejarClickBoton(btnBano.text.toString()) }
         btnTerminar.setOnClickListener { manejarClickBoton(btnTerminar.text.toString()) }
         btnComida.setOnClickListener { manejarClickBoton(btnComida.text.toString()) }
-        btnDetenerEnvio.setOnClickListener {
-            enviarMensajeDetener()
-            Toast.makeText(this, "Enviando orden para detener envío", Toast.LENGTH_SHORT).show()
-        }
+
 
         Wearable.getMessageClient(this).addListener(this)
 
@@ -142,25 +138,45 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
     }
 
     private fun crearRegistroDesdeTexto(texto: String, ubicacionActual: String?): RegistroBuffer {
+        // Regex para caídas
         val caidaRegex = Regex("(POSIBLE CAIDA|CAIDA) en lat:([\\d.-]+), lon:([\\d.-]+)", RegexOption.IGNORE_CASE)
-        val match = caidaRegex.find(texto)
-        return if (match != null) {
-            val tipoCaida = match.groupValues[1].uppercase()
-            val lat = match.groupValues[2]
-            val lon = match.groupValues[3]
-            RegistroBuffer(
-                dato = tipoCaida,
-                ubicacion = "lat=$lat, lon=$lon",
-                guid = guid
-            )
-        } else {
-            RegistroBuffer(
-                dato = texto,
-                ubicacion = ubicacionActual,
-                guid = guid
-            )
+        // Regex para velocidad
+        val velocidadRegex = Regex("(VELOCIDAD SUPERADA) en lat:([\\d.-]+), lon:([\\d.-]+)", RegexOption.IGNORE_CASE)
+
+        val matchCaida = caidaRegex.find(texto)
+        val matchVelocidad = velocidadRegex.find(texto)
+
+        return when {
+            matchCaida != null -> {
+                val tipoCaida = matchCaida.groupValues[1].uppercase()
+                val lat = matchCaida.groupValues[2]
+                val lon = matchCaida.groupValues[3]
+                RegistroBuffer(
+                    dato = tipoCaida,
+                    ubicacion = "lat=$lat, lon=$lon",
+                    guid = guid
+                )
+            }
+            matchVelocidad != null -> {
+                val tipoEvento = matchVelocidad.groupValues[1].uppercase()
+                val lat = matchVelocidad.groupValues[2]
+                val lon = matchVelocidad.groupValues[3]
+                RegistroBuffer(
+                    dato = tipoEvento,
+                    ubicacion = "lat=$lat, lon=$lon",
+                    guid = guid
+                )
+            }
+            else -> {
+                RegistroBuffer(
+                    dato = texto,
+                    ubicacion = ubicacionActual,
+                    guid = guid
+                )
+            }
         }
     }
+
 
     private fun manejarClickBoton(buttonText: String) {
         Toast.makeText(this, buttonText, Toast.LENGTH_SHORT).show()

@@ -50,7 +50,7 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
     private val datosRecibidos = mutableListOf<String>()
     private var guid: String = ""
     private lateinit var fusedLocationClient: FusedLocationProviderClient
-
+    private var contadorVelocidadSuperada = 0
     private lateinit var db: AppDatabase
     private lateinit var datoDao: DatoDao
 
@@ -281,12 +281,27 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
         val registro = crearRegistroDesdeTexto(mensaje, null)
         bufferDatos.add(registro)
 
+        // 📌 Contar eventos de velocidad superada
+        if (mensaje.contains("VELOCIDAD SUPERADA", ignoreCase = true)) {
+            contadorVelocidadSuperada++
+            Log.d("PhoneApp", "Contador VELOCIDAD SUPERADA: $contadorVelocidadSuperada")
+
+            if (contadorVelocidadSuperada >= 5) {
+                Log.d("PhoneApp", "Se alcanzaron 5 eventos, enviando datos a la API...")
+                lifecycleScope.launch(Dispatchers.IO) {
+                    enviarDatosAlAPI(bufferDatos.toList()) // Enviar todo el buffer
+                    contadorVelocidadSuperada = 0 // Reiniciar contador
+                }
+            }
+        }
+
         runOnUiThread {
             datosRecibidos.add(mensaje)
             adapter.notifyItemInserted(datosRecibidos.size - 1)
             rvDatos.scrollToPosition(datosRecibidos.size - 1)
         }
     }
+
 
     private suspend fun insertarBufferEnDB(): Boolean {
         if (bufferDatos.isEmpty()) return true

@@ -101,6 +101,16 @@
             app:layout_constraintEnd_toEndOf="parent">
 
             <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnIniciar"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Iniciar envío"
+                android:textAllCaps="false"
+                android:layout_marginEnd="8dp"
+                style="@style/CustomButton" />
+
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnBano"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -109,7 +119,6 @@
                 android:textAllCaps="false"
                 android:layout_marginEnd="8dp"
                 style="@style/CustomButton" />
-
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnTerminar"
@@ -129,7 +138,9 @@
                 android:text="Hora de comida"
                 android:textAllCaps="false"
                 style="@style/CustomButton" />
+
         </LinearLayout>
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

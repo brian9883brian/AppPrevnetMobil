@@ -10,11 +10,12 @@ interface DatoDao {
     suspend fun insertarDato(dato: DatoEntity)
 
     @Insert
-    suspend fun insertarDatos(datos: List<DatoEntity>)  // inserción múltiple
+    suspend fun insertarDatos(datos: List<DatoEntity>)
 
     @Query("SELECT * FROM datos")
     suspend fun obtenerDatos(): List<DatoEntity>
+
     @Query("DELETE FROM datos")
     suspend fun deleteAll()
+
 }
-// comentario para subir

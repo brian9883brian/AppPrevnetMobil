@@ -96,6 +96,11 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
         val btnBano = findViewById<MaterialButton>(R.id.btnBano)
         val btnTerminar = findViewById<MaterialButton>(R.id.btnTerminar)
         val btnComida = findViewById<MaterialButton>(R.id.btnComida)
+        val btnIniciar = findViewById<MaterialButton>(R.id.btnIniciar)
+        btnIniciar.setOnClickListener {
+            enviarMensajeStart()
+            Toast.makeText(this, "Se ha enviado señal para iniciar", Toast.LENGTH_SHORT).show()
+        }
 
         btnBano.setOnClickListener { manejarClickBoton(btnBano.text.toString()) }
         btnTerminar.setOnClickListener { manejarClickBoton(btnTerminar.text.toString()) }
@@ -136,6 +141,24 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
             }
         }
     }
+    fun enviarMensajeStart() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val nodes = Wearable.getNodeClient(this@MainActivity).connectedNodes.await()
+                Log.d("PhoneApp", "Nodos conectados: ${nodes.map { it.displayName }}")
+                for (node in nodes) {
+                    Wearable.getMessageClient(this@MainActivity)
+                        .sendMessage(node.id, "/detener_envio", "START".toByteArray())
+                        .await()
+                    Log.d("PhoneApp", "Mensaje START enviado a ${node.displayName}")
+                }
+            } catch (e: Exception) {
+                Log.e("PhoneApp", "Error enviando mensaje START: ${e.message}")
+            }
+        }
+    }
+
+
 
     private fun crearRegistroDesdeTexto(texto: String, ubicacionActual: String?): RegistroBuffer {
         // Regex para caídas
@@ -281,16 +304,27 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
         val registro = crearRegistroDesdeTexto(mensaje, null)
         bufferDatos.add(registro)
 
-        // 📌 Contar eventos de velocidad superada
-        if (mensaje.contains("VELOCIDAD SUPERADA", ignoreCase = true)) {
-            contadorVelocidadSuperada++
-            Log.d("PhoneApp", "Contador VELOCIDAD SUPERADA: $contadorVelocidadSuperada")
-
-            if (contadorVelocidadSuperada >= 5) {
-                Log.d("PhoneApp", "Se alcanzaron 5 eventos, enviando datos a la API...")
+        // 📌 Lógica para eventos
+        when {
+            mensaje.contains("CAIDA", ignoreCase = true) -> {
+                Log.d("PhoneApp", "CAIDA detectada, enviando datos a la API inmediatamente...")
                 lifecycleScope.launch(Dispatchers.IO) {
-                    enviarDatosAlAPI(bufferDatos.toList()) // Enviar todo el buffer
+                    enviarDatosAlAPI(bufferDatos.toList())
                     contadorVelocidadSuperada = 0 // Reiniciar contador
+                }
+            }
+
+            mensaje.contains("VELOCIDAD SUPERADA", ignoreCase = true) ||
+                    mensaje.contains("POSIBLE CAIDA", ignoreCase = true) -> {
+                contadorVelocidadSuperada++
+                Log.d("PhoneApp", "Contador eventos críticos: $contadorVelocidadSuperada")
+
+                if (contadorVelocidadSuperada >= 5) {
+                    Log.d("PhoneApp", "Se alcanzaron 5 eventos, enviando datos a la API...")
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        enviarDatosAlAPI(bufferDatos.toList())
+                        contadorVelocidadSuperada = 0
+                    }
                 }
             }
         }
@@ -301,6 +335,7 @@ class MainActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListene
             rvDatos.scrollToPosition(datosRecibidos.size - 1)
         }
     }
+
 
 
     private suspend fun insertarBufferEnDB(): Boolean {
